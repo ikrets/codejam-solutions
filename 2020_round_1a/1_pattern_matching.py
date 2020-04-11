@@ -1,90 +1,75 @@
 T = int(input())
 
-def solve(patterns, pointers):
-    result = []
-    while True:
-        letter = None
-        star_letter = None
-        first_star_letter = None
+def solve(patterns):
+    p = []
+    q = []
+    r = []
 
-        letter_pointers = []
-        star_letter_pointers = []
-        first_star_letter_pointers = []
+    for pattern in patterns:
+        p.append(pattern[0])
+        r.append(pattern[-1])
+        left = 1 if pattern[0] != '*' else 0
+        right = -1 if pattern[-1] != '*' else len(pattern)
 
-        for i in range(N):
-            if patterns[i][pointers[i]] != '*':
-                if letter is None:
-                    letter = patterns[i][pointers[i]]
-                    letter_pointers.append(i)
-                else:
-                    if patterns[i][pointers[i]] != letter:
-                        return None
-                    else:
-                        letter_pointers.append(i)
-
-        for i in range(N):
-            if patterns[i][pointers[i]] == '*':
-                if pointers[i] == 0:
-                    continue
-
-                while pointers[i] >= 1 and patterns[i][pointers[i] - 1] == '*':
-                    pointers[i] -= 1
-
-                if pointers[i] > 1:
-                    if star_letter is None or star_letter == patterns[i][pointers[i] - 1]:
-                        star_letter = patterns[i][pointers[i] - 1]
-                        star_letter_pointers.append(i)
-
-                        if letter and letter == star_letter:
-                            pointers[i] -= 2
-                        
-                elif pointers[i] == 1:
-                    if first_star_letter is None or first_star_letter == patterns[i][pointers[i] - 1]:
-                        first_star_letter = patterns[i][pointers[i] - 1]
-                        first_star_letter_pointers.append(i)
-
-                        if letter and letter == first_star_letter:
-                            pointers[i] -= 2
-
-        for i in letter_pointers:
-            pointers[i] -= 1
-
-        if not letter and not star_letter and not first_star_letter:
-            return ''.join(reversed(result))
-
-        if letter:
-            result.append(letter)
-        elif star_letter:
-            result.append(star_letter)
-            for p in star_letter_pointers:
-                pointers[p] -= 2
+        if pattern[left:right]:
+            q.append(pattern[left:right])
         else:
-            result.append(first_star_letter)
-            for i in range(N):
-                letter_star = pointers[i] == 1 and patterns[i][1] == '*' and patterns[i][0] == first_star_letter
-                letter = pointers[i] == 0 and patterns[i][0] == first_star_letter
-                star = pointers[i] == 0 and patterns[i][0] == '*'
-                if not letter and not letter_star and not star:
-                    return None
-            return ''.join(reversed(result))
+            q.append('0')
 
-        any_finished = any(pointers[i] == -1 for i in range(len(pointers)))
-        all_finished = all(pointers[i] == -1 or (pointers[i] == 0 and patterns[i] == '*')  
-                       for i in range(len(pointers)))
+    solution_left = []        
+    solution_right = []
 
-        if any_finished and not all_finished:
+    while True:
+        letters = set(l for l in p if l not in '*0')
+        if len(letters) > 1:
             return None
-        if all_finished:
-            return ''.join(reversed(result))
-            
+        if len(letters) == 1:
+            if any(l == '0' for l in p):
+                return None
+
+            solution_left.append(letters.pop())
+            for i in range(len(patterns)):
+                if p[i] not in '*':
+                    if q[i][0] in '0*':
+                        p[i] = q[i][0]
+                    else:
+                        p[i] = q[i][0]
+                        q[i] = q[i][1:]
+                        if not q[i]:
+                            q[i] = ['0']
+            continue
+
+        letters = set(l for l in r if l not in '*0')
+        if len(letters) > 1:
+            return None
+        if len(letters) == 1:
+            if any(l == '0' for l in r):
+                return None
+
+            solution_right.append(letters.pop())
+            for i in range(len(patterns)):
+                if r[i] not in '*':
+                    if q[i][-1] in '0*':
+                        r[i] = q[i][-1]
+                    else:
+                        r[i] = q[i][-1]
+                        q[i] = q[i][:-1]
+                        if not q[i]:
+                            q[i] = ['0']
+            continue
+
+        solution_middle = [''.join(subl) for subl in q]
+        solution = solution_left + solution_middle + solution_right[::-1]
+        solution = ''.join(solution)
+        solution = ''.join([c for c in solution if c not in '0*'])
+        return solution
 
 for t in range(T):
     N = int(input())
     
     patterns = [list(input().strip(' ')) for _ in range(N)]
-    pointers = [len(p) - 1 for p in patterns]
     
-    solution = solve(patterns, pointers)
+    solution = solve(patterns)
     if solution is not None:
         print('Case #{}: {}'.format(t + 1, solution))
     else:
